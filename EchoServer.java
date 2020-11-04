@@ -55,13 +55,18 @@ public class EchoServer extends AbstractServer
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-    System.out.println("Message received: " + msg + " from " + client);
+    System.out.println("Message received: " + msg + " from " + client.getInfo("loginID"));
     String username= "";
     
-//    if (client.getInfo("loginID") != null) {
-//    	username = (String) client.getInfo("loginID");
-//    	this.sendToAllClients(username + ">" + msg);
-//    }
+    if (client.getInfo("loginID") != null && (int) msg == 3) {
+    	this.sendToAllClients(client.getInfo("loginID") + " has disconnected");
+    	return;
+    }
+    
+    if (client.getInfo("loginID") != null) {
+    	username = (String) client.getInfo("loginID");
+    	this.sendToAllClients(username + " > " + msg);
+    }
     
     if(msg.toString().contains("#login")) {
     	if (client.getInfo("loginID") != null) {
@@ -76,14 +81,23 @@ public class EchoServer extends AbstractServer
     	else {
     	username =  msg.toString().substring(msg.toString().lastIndexOf(" ") + 1);
     	client.setInfo("loginID", username);
+    	String welcome = username + " has logged in";
+    	try {
+			client.sendToClient(welcome);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Unable to login");
+		}
     	}
+    	
+    	
     }
-    
-    if (client.getInfo("loginID") != null) {
-    	username = (String) client.getInfo("loginID");
-    	this.sendToAllClients(username + " > " + msg);
-    }
-      	
+//    
+//    if (client.getInfo("loginID") != null) {
+//    	username = (String) client.getInfo("loginID");
+//    	this.sendToAllClients(username + " > " + msg);
+//    }
+//      	
     
     //this.sendToAllClients(username + ">" + msg);
   }
@@ -95,7 +109,7 @@ public class EchoServer extends AbstractServer
 	  
 	  	if(!message.contains("#")) {
 	  		//System.out.println(message);
-	  		sendToAllClients(message);
+	  		sendToAllClients("SERVER MESSAGE> " + message);
 	  		//sendToAllClients(serverClient.display(message));
 	  		serverClient.display(message);
 	  	}
@@ -174,7 +188,9 @@ public class EchoServer extends AbstractServer
   @Override
   protected void clientDisconnected(
 		    ConnectionToClient client) {
-	  System.out.println("User " + client.getId() + " has disconnected");
+	  String disconnectMsg = "User " + client.getInfo("loginID") + " has disconnected";
+	  System.out.println(disconnectMsg);
+	  sendToAllClients(disconnectMsg);
   }
   
   //Getter

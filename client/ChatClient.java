@@ -84,10 +84,13 @@ public class ChatClient extends AbstractClient
 	    switch(message) {
 	  	  case("#quit"):
 	  		System.out.println("Quitting the service");
+	  	  // Response code 3 -> Quitting
+	  	  this.sendToServer(3);
 	  	  	quit();
 	  	  case("#logoff"):
 	  		  // This does not disconnect from server!
 	  		System.out.println("Logging off");
+	  	  	this.sendToServer(3);
 	  	  	this.closeConnection();
 	  	  	loggedIn = false;
 	  	  	//connectionClosed();
