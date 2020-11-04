@@ -26,6 +26,10 @@ public class ChatClient extends AbstractClient
    * the display method in the client.
    */
   ChatIF clientUI; 
+  
+  String loginID;
+  
+  boolean loggedIn;
 
   
   //Constructors ****************************************************
@@ -38,12 +42,21 @@ public class ChatClient extends AbstractClient
    * @param clientUI The interface type variable.
    */
   
-  public ChatClient(String host, int port, ChatIF clientUI) 
+  public ChatClient(String host, int port, ChatIF clientUI, String login) 
     throws IOException 
   {
     super(host, port); //Call the superclass constructor
+    loginID = login;
     this.clientUI = clientUI;
+    
+    if(loginID.equals("")) {
+    	System.out.println("Users must input a user ID");
+    	quit();
+    }
+    
     openConnection();
+    loggedIn = true;
+    this.sendToServer("#login " + loginID);
   }
 
   
@@ -55,7 +68,7 @@ public class ChatClient extends AbstractClient
    * @param msg The message from the server.
    */
   public void handleMessageFromServer(Object msg) 
-  {
+  {  
     clientUI.display(msg.toString());
   }
 
@@ -68,14 +81,67 @@ public class ChatClient extends AbstractClient
   {
     try
     {
-      sendToServer(message);
-    }
-    catch(IOException e)
+	    switch(message) {
+	  	  case("#quit"):
+	  		System.out.println("Quitting the service");
+	  	  	quit();
+	  	  case("#logoff"):
+	  		  // This does not disconnect from server!
+	  		System.out.println("Logging off");
+	  	  	this.closeConnection();
+	  	  	loggedIn = false;
+	  	  	//connectionClosed();
+	  	  case("#sethost"):
+	  		  break;
+	  	  case("#setport"):
+	  		  break;
+	  	  case("login"):
+	  		  if(loggedIn = false) {
+	  			  this.openConnection();
+	  		  }
+	  		  else {
+	  			  System.out.println("User already logged in!");
+	  		  }
+	  		  break;
+	  	  case("#gethost"):
+	  		System.out.println(this.getHost());
+	  	  	break;
+	  	  case("#getport"):
+	  		System.out.println(this.getPort());
+	  	  	break;
+	    }
+	    
+	    
+	    if (message.contains("#setport")){
+			int port = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1));
+			this.setPort(port);
+			System.out.println("Port has been changed to " + port);}
+	    else if (message.contains("#sethost")) {
+	    	String host = message.substring(message.lastIndexOf(" ") + 1);
+	    	this.setHost(host);
+	    	System.out.println("Host has been changed to " + host);
+	    }
+	    
+	    
+	    
+	    sendToServer(message);    
+    }catch(IOException e)
     {
       clientUI.display
         ("Could not send message to server.  Terminating client.");
       quit();
     }
+  }
+  
+  @Override
+  protected void connectionClosed() {
+	  System.out.println("Server has shutdown, now quitting");
+  }
+  
+  @Override 
+  protected void connectionException(Exception e) {
+	  System.out.println("Server has shutdown, now quitting");
+	  System.exit(0);
   }
   
   /**
@@ -90,5 +156,6 @@ public class ChatClient extends AbstractClient
     catch(IOException e) {}
     System.exit(0);
   }
+  
 }
 //End of ChatClient class
